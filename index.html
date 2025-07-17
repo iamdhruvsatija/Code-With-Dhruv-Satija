@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Memory Surprise Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; background: #fceabb; margin:0; padding:0; }
+    h1 { margin-top:40px; color:#333; }
+    .choice-container { margin-top:20px; }
+    button { padding:12px 24px; margin:10px; font-size:18px; border:none; border-radius:8px; cursor:pointer; background:#ff6b81; color:#fff; }
+    .game-board { display:none; margin:40px auto; max-width:400px; grid-template-columns:repeat(4,1fr); gap:10px; display:grid; }
+    .card { background:#fff; height:80px; border-radius:10px; display:flex; justify-content:center; align-items:center; font-size:28px; cursor:pointer; border:2px solid #ff6b81; }
+    .result { margin-top:30px; font-size:24px; font-weight:bold; color:#333; }
+    .share-btn { display:none; margin-top:20px; background:#2ecc71; }
+  </style>
+</head>
+<body>
+  <h1>Send a Surprise ❤️</h1>
+  <div class="choice-container" id="choice">
+    <p>Who are you sending this to?</p>
+    <button onclick="copyLink('boy')">Boy</button>
+    <button onclick="copyLink('girl')">Girl</button>
+  </div>
+  <div class="game-board" id="gameBoard"></div>
+  <div class="result" id="result"></div>
+  <button class="share-btn" id="shareBtn" onclick="shareGame()">Share this with someone</button>
+
+  <script>
+    const emojis = ['💖','💖','💋','💋','😡','😡','😎','😎'];
+    let firstCard, secondCard, lock = false, matches = 0;
+
+    function shuffle(a) {
+      return a.sort(() => Math.random() - 0.5);
+    }
+
+    function copyLink(gender) {
+      const url = `${window.location.origin}${window.location.pathname}?for=${gender}`;
+      navigator.clipboard.writeText(url);
+      alert(`Link copied for a ${gender}! Send it to them 😎\n\n${url}`);
+    }
+
+    window.onload = () => {
+      const g = new URLSearchParams(location.search).get('for');
+      if (g === 'boy' || g === 'girl') startGame(g);
+    };
+
+    function startGame(gender) {
+      document.getElementById('choice').style.display = 'none';
+      const gb = document.getElementById('gameBoard');
+      gb.style.display = 'grid';
+      shuffle(emojis).forEach(e => {
+        const c = document.createElement('div');
+        c.className = 'card';
+        c.dataset.emoji = e;
+        c.textContent = '❓';
+        c.onclick = () => flipCard(c, gender);
+        gb.append(c);
+      });
+    }
+
+    function flipCard(card, gender) {
+      if (lock || card === firstCard || card.classList.contains('matched')) return;
+      card.textContent = card.dataset.emoji;
+      if (!firstCard) firstCard = card;
+      else {
+        secondCard = card;
+        lock = true;
+        if (firstCard.dataset.emoji === secondCard.dataset.emoji) {
+          [firstCard, secondCard].forEach(cc => cc.classList.add('matched'));
+          matches++;
+          reset();
+          if (matches === 4) showResult(gender);
+        } else {
+          setTimeout(() => {
+            firstCard.textContent = secondCard.textContent = '❓';
+            reset();
+          }, 800);
+        }
+      }
+    }
+
+    function reset() {
+      [firstCard, secondCard] = [null, null];
+      lock = false;
+    }
+
+    function showResult(gender) {
+      const b = ['Bro Hug 🤜🤛','Sweet Punch 👊','Better Luck Next Time 😅'];
+      const g = ['Girl Kiss 💋','Tight Hug 🤗','Slap from Crush 😝'];
+      const msg = (gender === 'boy' ? b : g)[Math.floor(Math.random() * 3)];
+      document.getElementById('result').textContent = msg;
+      document.getElementById('shareBtn').style.display = 'inline-block';
+    }
+
+    function shareGame() {
+      const text = `You gotta try this! 🎲 ${location.href}`;
+      navigator.share ? navigator.share({title:'Surprise Game', text}) : (navigator.clipboard.writeText(`${text}`), alert('Link copied! 😜'));
+    }
+  </script>
+</body>
+</html>
